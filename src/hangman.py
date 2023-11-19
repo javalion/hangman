@@ -1,9 +1,23 @@
 #!/usr/bin/env python3
 """Hangman Game"""
 
+import os
+import requests
+import json
+
 def initialize():
     print("Choosing word...")
-    return "cat"
+    word = "cat"
+    apiKey = os.environ.get('API_KEY')
+    api_url = 'https://api.api-ninjas.com/v1/randomword'
+    response = requests.get(api_url, headers={'X-Api-Key': apiKey})
+    if response.status_code == requests.codes.ok:
+        jsonResponse = json.loads(response.text)
+        word = jsonResponse["word"]
+    else:
+        print("Error:", response.status_code, response.text)
+
+    return word
 
 def get_letter_from_user(chosen_letters):
     letter = input("Choose a letter > ")
@@ -39,7 +53,7 @@ def is_missing_letters(identified_letters, word):
 
 def end_game_play(identified_letters, word):
     if is_missing_letters(identified_letters, word):
-        print("You lost")
+        print("You lost - " + word)
     else:
         print("You won")
 
@@ -48,7 +62,7 @@ def start_game_play(word):
     identified_letters = set()
     chosen_letters = set()
     print("Starting game...")
-    while current_try <= 6 and is_missing_letters(identified_letters, word):
+    while current_try <= (len(word) * 2) and is_missing_letters(identified_letters, word):
         print_word(word, identified_letters)
         print("Try number:", current_try)
         letter = get_letter_from_user(chosen_letters)
@@ -56,6 +70,7 @@ def start_game_play(word):
         letter_in_word = is_letter_in_word(letter, word)
         if letter_in_word:
           identified_letters.add(letter)
+        print(chosen_letters)
         current_try += 1
     print_word(word, identified_letters)
     end_game_play(identified_letters, word)
